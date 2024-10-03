@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 
 class JobController extends Controller
 {
@@ -36,12 +37,19 @@ class JobController extends Controller
             'salary' => ['required']
         ]);
 
-        Job::create([
+        $job = Job::create([
             'title' => request('title'),
             'salary' => request('salary'),
             //hard coded for now
             'employer_id' => 1
         ]);
+
+
+        //after pushing the job in the queue , the php artisan queue:work command
+        //should be running to perform this job
+        Mail::to($job->employer->user->email)->queue(
+            new \App\Mail\JobPosted($job)
+        );
 
         return redirect('/jobs');
     }
